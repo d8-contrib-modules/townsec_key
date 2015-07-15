@@ -1,0 +1,12 @@
+name: 'Townsend Security Key Connection'
+description: 'Adds integration with Townsend Security Alliance Key Manager encryption services.'
+core: 8.x
+package: Encryption
+dependencies:
+  - encrypt
+  - key
+  - user
+version: 7.x-1.1
+project: townsec_key
+datestamp: '1402433933'
+type: module
