@@ -2,7 +2,7 @@
 
 namespace Drupal\townsec_key\Plugin\EncryptionMethod;
 
-use Drupal\encrypt\EncryptionMethodBaseInterface;
+use Drupal\encrypt\EncryptionMethodInterface;
 use Drupal\Core\Plugin\PluginBase;
 
 /**
@@ -17,7 +17,7 @@ use Drupal\Core\Plugin\PluginBase;
  *   description = "This encryption method uses the Townsend Security Alliance Key Manager onboard AES encryption to provide remote NIST certified encryption of sensitive data."
  * )
  */
-class TownSecAES extends PluginBase implements EncryptionMethodBaseInterface {
+class TownSecAES extends PluginBase implements EncryptionMethodInterface {
 
   /**
    * @return mixed
@@ -30,19 +30,17 @@ class TownSecAES extends PluginBase implements EncryptionMethodBaseInterface {
    * @return mixed
    */
   public function encrypt($text, $key, $options = array()) {
-    $provider = encrypt_get_key_provider('townsec_akm');
-    $settings = $provider['settings'];
-    $primencrypt = $settings['primary_server']['akm_encrypt_port'];
-    $bkupencrypt = $settings['backup_server']['akm_encrypt_port'];
-    $primserver = 'tls://' . $settings['primary_server']['akm_host_server'] . ':' . $primencrypt;
-    $bkupserver = 'tls://' . $settings['backup_server']['akm_backup_server'] . ':' . $bkupencrypt;
-    $keyname = $settings['key_name'];
+    $primencrypt = $key['primary_server']['akm_encrypt_port'];
+    $bkupencrypt = $key['backup_server']['akm_encrypt_port'];
+    $primserver = 'tls://' . $key['primary_server']['akm_host_server'] . ':' . $primencrypt;
+    $bkupserver = 'tls://' . $key['backup_server']['akm_backup_server'] . ':' . $bkupencrypt;
+    $keyname = $key['key_name'];
     $errno = NULL;
     $errstr = NULL;
-    $primlocal = \Drupal::root() . '/' . $settings['primary_server']['client_cert_and_key_file'];
-    $primca = \Drupal::root() . '/' . $settings['primary_server']['ca_cert_file'];
-    $bkuplocal = \Drupal::root() . '/' . $settings['backup_server']['client_cert_and_key_file'];
-    $bkupca = \Drupal::root() . '/' . $settings['backup_server']['ca_cert_file'];
+    $primlocal = \Drupal::root() . '/' . $key['primary_server']['client_cert_and_key_file'];
+    $primca = \Drupal::root() . '/' . $key['primary_server']['ca_cert_file'];
+    $bkuplocal = \Drupal::root() . '/' . $key['backup_server']['client_cert_and_key_file'];
+    $bkupca = \Drupal::root() . '/' . $key['backup_server']['ca_cert_file'];
 
     // Create TLS Connection with provided key locations.
     $primopts = array(
@@ -109,19 +107,17 @@ class TownSecAES extends PluginBase implements EncryptionMethodBaseInterface {
    * @return mixed
    */
   public function decrypt($text, $key, $options = array()) {
-    $provider = encrypt_get_key_provider('townsec_akm');
-    $settings = $provider['settings'];
-    $primencrypt = $settings['primary_server']['akm_encrypt_port'];
-    $bkupencrypt = $settings['backup_server']['akm_encrypt_port'];
-    $primserver = 'tls://' . $settings['primary_server']['akm_host_server'] . ':' . $primencrypt;
-    $bkupserver = 'tls://' . $settings['backup_server']['akm_backup_server'] . ':' . $bkupencrypt;
-    $keyname = $settings['key_name'];
+    $primencrypt = $key['primary_server']['akm_encrypt_port'];
+    $bkupencrypt = $key['backup_server']['akm_encrypt_port'];
+    $primserver = 'tls://' . $key['primary_server']['akm_host_server'] . ':' . $primencrypt;
+    $bkupserver = 'tls://' . $key['backup_server']['akm_backup_server'] . ':' . $bkupencrypt;
+    $keyname = $key['key_name'];
     $errno = NULL;
     $errstr = NULL;
-    $primlocal = \Drupal::root() . '/' . $settings['primary_server']['client_cert_and_key_file'];
-    $primca = \Drupal::root() . '/' . $settings['primary_server']['ca_cert_file'];
-    $bkuplocal = \Drupal::root() . '/' . $settings['backup_server']['client_cert_and_key_file'];
-    $bkupca = \Drupal::root() . '/' . $settings['backup_server']['ca_cert_file'];
+    $primlocal = \Drupal::root() . '/' . $key['primary_server']['client_cert_and_key_file'];
+    $primca = \Drupal::root() . '/' . $key['primary_server']['ca_cert_file'];
+    $bkuplocal = \Drupal::root() . '/' . $key['backup_server']['client_cert_and_key_file'];
+    $bkupca = \Drupal::root() . '/' . $key['backup_server']['ca_cert_file'];
 
     // Create TLS Connection with provided key locations.
     $primopts = array(
