@@ -209,10 +209,10 @@ class TownSecKey extends KeyTypeBase {
    */
   public function getKeyValue() {
     // If the encryption method is Townsend Security AES, don't retrieve the key.
-    $encryption_method = \Drupal::config('encrypt.settings')->get('encrypt_encryption_method');
+    $encryption_method = \Drupal::config('encrypt.settings')->get('encryption_method');
 
     if ($encryption_method == 'townsec_aes') {
-      return TRUE;
+      return $this->configuration;
     }
 
     $primretrieve = $this->configuration['primary_server']['akm_retrieve_port'];
