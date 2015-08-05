@@ -47,6 +47,7 @@ class TownSecAES extends PluginBase implements EncryptionMethodInterface {
       'ssl' => array(
         'cafile' => $primca,
         'capture_peer_cert' => TRUE,
+        'verify_peer_name' => FALSE,
         'local_cert' => $primlocal,
         'verify_peer' => TRUE,
       ),
@@ -71,32 +72,31 @@ class TownSecAES extends PluginBase implements EncryptionMethodInterface {
     if ($fp == FALSE) {
       return '';
     }
-    // Key Length = 40 (left justify pad on right).
-    // Instance = 24 (leave blank or instance got back).
 
     // Generate a random IV to use w/ the encryption.
     $iv = user_password(16);
-    $textcount = sprintf('%05d', strlen($text));
-    if(floor($textcount/16) != $textcount/16){
-      $padlen = 16 * ceil($textcount/16);
-      $text = sprintf('% -' . $padlen . 's', $text);
-      $textcount = sprintf('%05d', strlen($text));
-    }
-    $key = sprintf('% -64s', $keyname);
-    $request = sprintf("000982019YNB16" . $textcount . "YNYY" . $iv . "" . $key . "" . "" . $text . "");
+    // make text length an even multiple of 16
+    $textlen = strlen($text);
+    $totallen = $textlen + (16 - $textlen % 16);
+    $text = sprintf("% -{$totallen}s", $text);
+    $textcount = sprintf('%05d', $totallen);
+    // Key Length = 40 (left justify pad on right).
+    $key = sprintf('% -40s', $keyname);
+    // Instance = 24 (leave blank for default instance).
+    $inst = str_repeat(' ', 24);
+    $request = "000982019YNBIN{$textcount}YNYY{$iv}{$key}{$inst}{$text}";
     fwrite($fp, $request);
     $len = fread($fp, 5);
+    $value = '';
     if ($len) {
       //Be sure to read all the way to the end of the returned values
-      $return = fread($fp, $len + (3*$textcount));
-      if ($return) {
-        $inst = substr($return, 15, 24);
-        $coded = substr($return, 39);
-        $value = $iv . $inst . $coded;
+      $rsp = fread($fp, $len);
+      if ($rsp) {
+        $codedlen = substr($rsp, 10, 5);
+        $inst = substr($rsp, 15, 24);
+        $cipher = fread($fp, $codedlen);
+        $value = $iv . $inst . bin2hex($cipher);
       }
-    }
-    else {
-      return '';
     }
     fclose($fp);
 
@@ -124,6 +124,7 @@ class TownSecAES extends PluginBase implements EncryptionMethodInterface {
       'ssl' => array(
         'cafile' => $primca,
         'capture_peer_cert' => TRUE,
+        'verify_peer_name' => FALSE,
         'local_cert' => $primlocal,
         'verify_peer' => TRUE,
       ),
@@ -153,32 +154,28 @@ class TownSecAES extends PluginBase implements EncryptionMethodInterface {
 
     $iv = substr($text, 0, 16);
     $inst = substr($text, 16, 24);
-    $coded = substr($text, 40);
-    $textcount = sprintf('%05d', strlen($coded));
-    $keypad = sprintf('% -40s', $keyname);
-    $key = $keypad . $inst;
-    //Make sure request is mod16
-    if(floor($textcount/16) != $textcount/16){
-      $padlen = 16 * ceil($textcount/16);
-      $coded = sprintf('% -' . $padlen . 's', $coded);
-      $textcount = sprintf('%05d', strlen($coded));
-    }
-    $decrypt_header = "001012021YNB16" . $textcount . "BINYNYY" . $iv . $key;
-    $decrypt = sprintf($decrypt_header . $coded);
-    fwrite($fp, $decrypt);
+    $cipher = substr($text, 40);
+    $cipherlen = strlen($cipher);
+    $textcount = sprintf('%05d', $cipherlen);
+    $key = sprintf('% -40s', $keyname);
+    $codedlen = sprintf('%05d', $cipherlen);
+
+    $decrypt_header = "001012021YNB16{$codedlen}BINYNYY{$iv}{$key}{$inst}";
+    $request = $decrypt_header . $cipher;
+    fwrite($fp, $request);
+
+    $plain = '';
     $len = fread($fp, 5);
     if ($len) {
-      $rsp = fread($fp, $len + $textcount);
+      $rsp = fread($fp, $len);
       if ($rsp) {
-        $value = substr($rsp, 39);
-        $value = rtrim($value);
+        $plainlen = substr($rsp, 10, 5);
+        $padded = fread($fp, $plainlen);
+        $plain = rtrim($padded);
       }
-    }
-    else {
-      return '';
     }
     fclose($fp);
 
-    return $value;
+    return $plain;
   }
 }
