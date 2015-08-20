@@ -1,26 +1,27 @@
 <?php
 /**
  * @file
- * Contains Drupal\key\KeyType\TownSecKey.
+ * Contains Drupal\key\KeyProvider\TownSecKey.
  *
  * Plugin definition for a key provider using
  * Townsend Security’s Alliance Key Manager service.
  */
 
-namespace Drupal\townsec_key\Plugin\KeyType;
+namespace Drupal\townsec_key\Plugin\KeyProvider;
+
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\key\KeyTypeBase;
+use Drupal\key\KeyProviderBase;
 
 /**
  * Enforces a number of a type of character in passwords.
  *
- * @KeyType(
+ * @KeyProvider(
  *   id = "townsec_akm",
  *   title = @Translation("Townsend Security’s Alliance Key Manager"),
  *   description = @Translation("Key provider using Townsend Security’s Alliance Key Manager service."),
  * )
  */
-class TownSecKey extends KeyTypeBase {
+class TownSecKey extends KeyProviderBase {
   /**
    * {@inheritdoc}
    */
